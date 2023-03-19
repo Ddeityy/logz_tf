@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "logs_api"
+version = "0.1.0"
+description = ""
+authors = ["deity <ddeityy@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.94.1"
+wheel = "^0.40.0"
+sqlmodel = "^0.0.8"
+steamsignin = "^1.1.1"
+uvicorn = "^0.21.1"
+requests = "^2.28.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
