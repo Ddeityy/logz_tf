@@ -1,11 +1,12 @@
-from fastapi import Depends, FastAPI, HTTPException, Response
-from sqlalchemy.orm import Session
 import uvicorn
+from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.responses import HTMLResponse, RedirectResponse
+from pysteamsignin.steamsignin import SteamSignIn
+from sqlalchemy.orm import Session
 
-from crud import *
-from models import *
-from schemas import *
-from db import SessionLocal, engine
+from crud import get_log, get_logs, get_user_logs, create_data
+from db import SessionLocal, engine, Base
+from schemas import LogSchema
 
 Base.metadata.create_all(bind=engine)
 
@@ -21,9 +22,44 @@ def get_db():
         db.close()
 
 
-@app.get("/logs/", response_model=list[Log])
+@app.get("/auth")
+def main(login=None):
+    if login is not None:
+        steamLogin = SteamSignIn()
+        # Flask expects an explicit return on the route.
+        return steamLogin.RedirectUser(
+            steamLogin.ConstructURL("http://localhost:8003/processlogin")
+        )
+
+    return HTMLResponse('Click <a href="auth/?login=true">to log in</a>')
+
+
+@app.get("/processlogin/")
+def process(request: Request):
+    steamLogin = SteamSignIn()
+    steamID = steamLogin.ValidateResults(request.query_params)
+
+    if steamID is not False:
+        return steamID
+    else:
+        return RedirectResponse("http://localhost:8003/")
+
+
+@app.get("/user/{user_id}", response_model=list[LogSchema])
+def read_user_logs(user_id: int, db: Session = Depends(get_db)):
+    logs = get_user_logs(user_id, db)
+    return logs
+
+
+@app.get("/create/")
+def create(db: Session = Depends(get_db)):
+    create_data(db)
+    return True
+
+
+@app.get("/logs/", response_model=list[LogSchema])
 def read_logs(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    logs = get_logs(db)
+    logs = get_logs(db, skip=skip, limit=limit)
     return logs
 
 

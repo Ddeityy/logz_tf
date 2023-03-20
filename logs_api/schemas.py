@@ -7,15 +7,15 @@ class LogBase(BaseModel):
     map: str
     date: int
     views: int
+    player_count: str
     players: str
-    file_path: str
 
 
 class LogCreate(LogBase):
     pass
 
 
-class Log(LogBase):
+class LogSchema(LogBase):
     id: int
 
     class Config:
