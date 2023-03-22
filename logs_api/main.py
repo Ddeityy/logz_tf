@@ -7,11 +7,25 @@ from sqlalchemy.orm import Session
 from crud import get_log, get_logs, get_user_logs, create_data
 from db import SessionLocal, engine, Base
 from schemas import LogSchema
+from fastapi.middleware.cors import CORSMiddleware
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
+
+origins = [
+    "http://localhost",
+    "http://localhost:5173",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Dependency
 def get_db():
@@ -45,6 +59,11 @@ def process(request: Request):
         return RedirectResponse("http://localhost:8003/")
 
 
+@app.get("/")
+def index_redirect():
+    return RedirectResponse("http://localhost:8003/logs")
+
+
 @app.get("/user/{user_id}", response_model=list[LogSchema])
 def read_user_logs(user_id: int, db: Session = Depends(get_db)):
     logs = get_user_logs(user_id, db)
@@ -58,7 +77,12 @@ def create(db: Session = Depends(get_db)):
 
 
 @app.get("/logs/", response_model=list[LogSchema])
-def read_logs(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+def read_logs(
+    skip: int = 0,
+    limit: int = 1000,
+    db: Session = Depends(get_db),
+    players: str | None = None,
+):
     logs = get_logs(db, skip=skip, limit=limit)
     return logs
 
