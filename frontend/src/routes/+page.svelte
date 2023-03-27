@@ -1,61 +1,43 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import Table from './Table.svelte';
 	import Header from './Header.svelte';
-
-	let logs: ArrayLike<any> = [];
-	let currentPage: number = 0;
-	let offset: number = currentPage * 25;
-
-	onMount(async () => {
-		const res = await fetch(`http://localhost:8003/logs/?offset=${offset}`);
-		logs = await res.json();
-		console.log(logs);
-	});
-	const options: Object = {
-		year: 'numeric',
-		month: 'short',
-		day: 'numeric',
-		timeZone: 'CET',
-		hour: '2-digit',
-		minute: '2-digit',
-		hour12: true
-	};
-	const convertDate = (date: any) => {
-		let result = new Date(Number(date * 1000));
-		return result.toLocaleString('en-GB', options);
-	};
+	import Blur from './Blur.svelte';
 </script>
 
 <body>
 	<Header />
-	<table>
-		<tr>
-			<th style="text-align: left;">Title</th>
-			<th style="text-align: left;">Map</th>
-			<th style="text-align: center;">Format</th>
-			<th style="text-align: center;">Views</th>
-			<th style="text-align: left;">Date</th>
-		</tr>
-		{#each logs as log}
-			<tr>
-				<td>
-					<label for={''}>
-						<a href="/logs/{log.log_id}">
-							{log.title}
-						</a>
-					</label></td
-				>
-				<td>{log.map}</td>
-				<td>{log.player_count}</td>
-				<td>{log.views}</td>
-				<td>{convertDate(log.date)}</td>
-			</tr>
-		{/each}
-	</table>
+	<Blur />
+	<div class="container main">
+		<Table />
+	</div>
 </body>
 
-<style>
+<style lang="scss">
+	.container {
+		max-width: 980px !important;
+		border-bottom-left-radius: 5px;
+		border-bottom-right-radius: 5px;
+	}
+	.container::before {
+		display: table;
+		content: '';
+		line-height: 0;
+	}
+	.container::after {
+		clear: both;
+	}
+	.main {
+		position: relative;
+		background: #fff;
+		min-height: 100%;
+		padding: 0 30px 0 30px;
+	}
 	body {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		margin-right: -50%;
+		transform: translate(-50%, -50%);
 		margin: 0;
 		background: #272822;
 		font-family: Arial, sans-serif;
