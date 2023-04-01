@@ -1,16 +1,21 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import Header from './Header.svelte';
+	import Pagination from './Pagination.svelte';
 
+	let currentPage: number = 1;
 	let logs: ArrayLike<any> = [];
-	let currentPage: number = 0;
-	let offset: number = currentPage * 25;
+	let offset: number = 0;
 
-	onMount(async () => {
-		const res = await fetch(`http://localhost:8003/logs/?offset=${offset}`);
+	$: fetchData(offset);
+
+	const fetchData = async (offset: number) => {
+		const res = await fetch(`http://localhost:8003/logs/?offset=${offset}&limit=20`);
 		logs = await res.json();
 		console.log(logs);
-	});
+	};
+
+	onMount(() => fetchData(0));
+
 	const options: Object = {
 		year: 'numeric',
 		month: 'short',
@@ -26,34 +31,43 @@
 	};
 </script>
 
-<table class="table loglist">
-	<thead>
-		<tr>
-			<th style="text-align: left;">Title</th>
-			<th style="text-align: left;">Map</th>
-			<th style="text-align: left;">Format</th>
-			<th style="text-align: left;">Views</th>
-			<th style="text-align: left;">Date</th>
-		</tr>
-	</thead>
-	<tbody>
-		{#each logs as log}
+<div>
+	<table class="table loglist">
+		<thead>
 			<tr>
-				<td>
-					<label for={''}>
-						<a href="/logs/{log.log_id}">
-							{log.title}
-						</a>
-					</label></td
-				>
-				<td>{log.map}</td>
-				<td style="text-align: center;">{log.player_count}</td>
-				<td style="text-align: center;">{log.views}</td>
-				<td>{convertDate(log.date)}</td>
+				<th style="text-align: left;">Title</th>
+				<th style="text-align: left;">Map</th>
+				<th style="text-align: center;">Format</th>
+				<th style="text-align: center;">Views</th>
+				<th style="text-align: left;">Date</th>
 			</tr>
-		{/each}
-	</tbody>
-</table>
+		</thead>
+		<tbody>
+			{#each logs as log}
+				<tr>
+					<td>
+						<label for={''}>
+							<a href="/logs/{log.log_id}">
+								{log.title}
+							</a>
+						</label></td
+					>
+					<td>{log.map}</td>
+					<td style="text-align: center;">{log.player_count}</td>
+					<td style="text-align: center;">{log.views}</td>
+					<td style="text-align: left;">{convertDate(log.date)}</td>
+				</tr>
+			{/each}
+		</tbody>
+	</table>
+</div>
+<Pagination
+	{currentPage}
+	on:message={(e) => {
+		currentPage = e.detail.text;
+		offset = currentPage * 20;
+	}}
+/>
 
 <style lang="scss">
 	.loglist tbody > tr:nth-child(2n + 1) {
@@ -63,13 +77,15 @@
 		width: 100%;
 		margin-bottom: 10px;
 		background: none;
+		font-size: medium;
+		margin-top: 20px;
 
 		td {
 			padding: 8px;
 			line-height: 20px;
 			text-align: left;
 			vertical-align: middle;
-			border-right: 1px solidrgba(0, 0, 0, 0.07);
+			border-right: 1px solid rgba(128, 128, 128, 0.17);
 		}
 		a {
 			color: #dd4814;
@@ -80,7 +96,7 @@
 			line-height: 20px;
 			text-align: left;
 			vertical-align: middle;
-			border-right: 1px solidrgba(0, 0, 0, 0.07);
+			border-right: 1px solid rgba(128, 128, 128, 0.17);
 		}
 	}
 	table {

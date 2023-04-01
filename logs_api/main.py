@@ -3,8 +3,11 @@ from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pysteamsignin.steamsignin import SteamSignIn
 from sqlalchemy.orm import Session
+import requests
+import os
+from dotenv import load_dotenv
 
-from crud import get_log, get_logs, get_user_logs, create_data
+from crud import get_log, get_logs, get_user_logs, create_data, get_logs_total
 from db import SessionLocal, engine, Base
 from schemas import LogSchema
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,10 +17,7 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
 
-origins = [
-    "http://localhost",
-    "http://localhost:5173",
-]
+origins = ["http://localhost", "http://localhost:5174", "*"]
 
 app.add_middleware(
     CORSMiddleware,
@@ -37,31 +37,25 @@ def get_db():
 
 
 @app.get("/auth")
-def main(login=None):
-    if login is not None:
-        steamLogin = SteamSignIn()
-        # Flask expects an explicit return on the route.
-        return steamLogin.RedirectUser(
-            steamLogin.ConstructURL("http://localhost:8003/processlogin")
-        )
-
-    return HTMLResponse('Click <a href="auth/?login=true">to log in</a>')
-
-
-@app.get("/processlogin/")
-def process(request: Request):
+def main():
     steamLogin = SteamSignIn()
-    steamID = steamLogin.ValidateResults(request.query_params)
-
-    if steamID is not False:
-        return steamID
-    else:
-        return RedirectResponse("http://localhost:8003/")
+    return steamLogin.ConstructURL("http://localhost:5174/processlogin")
 
 
 @app.get("/")
 def index_redirect():
     return RedirectResponse("http://localhost:8003/logs")
+
+
+@app.get("/user/info/{user_id}")
+async def get_user_info(user_id: int):
+    load_dotenv()
+    key = os.getenv("STEAM_API")
+    resp = requests.get(
+        f"http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={key}&steamids={user_id}"
+    )
+    data = resp.json()
+    return data
 
 
 @app.get("/user/{user_id}", response_model=list[LogSchema])
@@ -76,14 +70,19 @@ def create(db: Session = Depends(get_db)):
     return True
 
 
+@app.get("/total/")
+def read_total_logs(db: Session = Depends(get_db)):
+    return get_logs_total(db)
+
+
 @app.get("/logs/", response_model=list[LogSchema])
 def read_logs(
-    skip: int = 0,
-    limit: int = 1000,
+    offset: int = 0,
+    limit: int = 20,
     db: Session = Depends(get_db),
     players: str | None = None,
 ):
-    logs = get_logs(db, skip=skip, limit=limit)
+    logs = get_logs(db, skip=offset, limit=limit)
     return logs
 
 

@@ -1,7 +1,3 @@
-<script lang="ts">
-	let logo = 'welcome.jpg';
-</script>
-
 <div class="welcome">
 	<div class="welcome-info">
 		<h1>Competitive Team Fortress 2 Stats</h1>

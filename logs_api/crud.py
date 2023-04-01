@@ -26,6 +26,10 @@ def get_logs(db: Session, skip: int = 0, limit: int = 100):
     return db.query(LogModel).offset(skip).limit(limit).all()
 
 
+def get_logs_total(db: Session):
+    return len(db.query(LogModel).all())
+
+
 def create_data(db: Session):
     response = get("https://logs.tf/api/v1/log?limit=5000")
     gjdata = response.json()
