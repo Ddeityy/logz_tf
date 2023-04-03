@@ -1,29 +1,10 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { steamID, steamAvatar, steamName } from './stores';
 	// Steam login
-	let url = $page.url;
-	let steamID: string | null = null;
-	let name: string;
-	let avatar_url: string;
 	let loadedSteamData = false;
 
-	if (url.searchParams.has('steamid')) {
-		steamID = url.searchParams.get('steamid')!;
-	}
-
-	const getSteamData = async (id: string) => {
-		let data = await fetch(`http://localhost:8003/user/info/${id}`);
-		let jdata = await data.json();
-		name = jdata.response.players[0].personaname;
-		avatar_url = jdata.response.players[0].avatarfull;
-		console.log(name);
-		console.log(avatar_url);
+	if ($steamID && $steamAvatar && $steamName) {
 		loadedSteamData = true;
-		return jdata;
-	};
-
-	if (steamID) {
-		getSteamData(steamID);
 	}
 
 	const handleLogin = async () => {
@@ -57,12 +38,13 @@
 				/>
 			</form>
 		</div>
-		{#if steamID && loadedSteamData}
+
+		{#if $steamID && loadedSteamData}
 			<div class="steam-panel">
-				<img src={avatar_url} alt="" />
-				<span>{name}</span>
+				<img src={$steamAvatar} alt="" />
+				<span>{$steamName}</span>
 			</div>
-		{:else}
+		{:else if !$steamID}
 			<!-- svelte-ignore a11y-click-events-have-key-events -->
 			<div class="steam-login"><img on:click={() => handleLogin()} src={steamButton} alt="" /></div>
 		{/if}
@@ -148,5 +130,6 @@
 	.steam-login {
 		margin-top: 5px;
 		margin-right: 10px;
+		cursor: grab;
 	}
 </style>

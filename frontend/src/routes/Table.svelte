@@ -11,7 +11,6 @@
 	const fetchData = async (offset: number) => {
 		const res = await fetch(`http://localhost:8003/logs/?offset=${offset}&limit=20`);
 		logs = await res.json();
-		console.log(logs);
 	};
 
 	onMount(() => fetchData(0));
